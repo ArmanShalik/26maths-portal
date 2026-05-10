@@ -176,6 +176,45 @@ function rotateCry() {
   }, 300);
 }
 
+// ── JSONP helper — works from any origin with Apps Script ──
+// Apps Script redirects via 302; plain fetch often fails across
+// origins (GitHub Pages, local file://). JSONP is bulletproof.
+function jsonpFetch(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = "__gsCb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+    const script = document.createElement("script");
+
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error("Request timed out (15 s). Check your API_URL in config.js."));
+    }, 15000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    window[cbName] = function(data) {
+      cleanup();
+      resolve(data);
+    };
+
+    script.src   = url + "&callback=" + cbName;
+    script.onerror = function() {
+      cleanup();
+      reject(new Error(
+        "Script load failed. Possible causes:\n" +
+        "1. API_URL in config.js is wrong or empty.\n" +
+        "2. Apps Script not deployed as Web App.\n" +
+        "3. 'Who has access' is not set to 'Anyone'.\n" +
+        "4. You have no internet connection."
+      ));
+    };
+    document.head.appendChild(script);
+  });
+}
+
 // ── Lookup ────────────────────────────────────────────────
 async function lookup() {
   const q = document.getElementById("queryInput").value.trim();
@@ -188,14 +227,39 @@ async function lookup() {
   setSearchBtn(true);
   Charts.destroyAll();
 
-  try {
-    const res  = await fetch(`${CONFIG.API_URL}?action=getFullData&query=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    onData(data);
-  } catch (err) {
+  // Validate API_URL
+  if (!CONFIG.API_URL || CONFIG.API_URL.trim() === "" ||
+      CONFIG.API_URL.indexOf("script.google.com") === -1) {
     showSpinner(false);
     setSearchBtn(false);
-    setError("Could not connect. Please check your connection and try again.");
+    setError(
+      "⚠ API_URL is not set correctly in config.js. " +
+      "Open js/config.js and paste your Apps Script Web App URL into API_URL."
+    );
+    return;
+  }
+
+  const url = `${CONFIG.API_URL}?action=getFullData&query=${encodeURIComponent(q)}`;
+
+  try {
+    // Try JSONP first (most reliable with Apps Script)
+    const data = await jsonpFetch(url);
+    onData(data);
+  } catch (jsonpErr) {
+    // JSONP failed — try plain fetch as last resort
+    try {
+      const res  = await fetch(url, { redirect: "follow" });
+      const data = await res.json();
+      onData(data);
+    } catch (fetchErr) {
+      showSpinner(false);
+      setSearchBtn(false);
+      // Show the real diagnostic error
+      const msg = jsonpErr.message || "Unknown error";
+      setError("❌ " + msg);
+      console.error("[Portal] JSONP error:", jsonpErr);
+      console.error("[Portal] Fetch error:", fetchErr);
+    }
   }
 }
 
@@ -399,28 +463,28 @@ function selectPaper(i) {
 // ── Download PDF ───────────────────────────────────────────
 async function downloadPDF() {
   const btn = document.getElementById("dlBtn");
-  btn.textContent  = "Generating…";
+  btn.textContent   = "Generating…";
   btn.style.opacity = "0.6";
-  btn.disabled     = true;
+  btn.disabled      = true;
 
   try {
-    const res  = await fetch(`${CONFIG.API_URL}?action=getPDF&query=${encodeURIComponent(currentQuery)}`);
-    const data = await res.json();
+    const url  = `${CONFIG.API_URL}?action=getPDF&query=${encodeURIComponent(currentQuery)}`;
+    const data = await jsonpFetch(url);
     if (data.error) { setError(data.error); }
     else {
-      const bytes = atob(data.pdf);
-      const arr   = new Uint8Array(bytes.length);
+      const bytes   = atob(data.pdf);
+      const arr     = new Uint8Array(bytes.length);
       for (let i=0;i<bytes.length;i++) arr[i]=bytes.charCodeAt(i);
-      const url = URL.createObjectURL(new Blob([arr],{type:"application/pdf"}));
-      const a   = document.createElement("a");
-      a.href = url; a.download = data.filename; a.click();
-      URL.revokeObjectURL(url);
+      const blobUrl = URL.createObjectURL(new Blob([arr],{type:"application/pdf"}));
+      const a       = document.createElement("a");
+      a.href = blobUrl; a.download = data.filename; a.click();
+      URL.revokeObjectURL(blobUrl);
     }
-  } catch(e) { setError("PDF generation failed. Please try again."); }
+  } catch(e) { setError("PDF failed: " + e.message); }
 
-  btn.innerHTML    = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PDF`;
+  btn.innerHTML     = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PDF`;
   btn.style.opacity = "1";
-  btn.disabled     = false;
+  btn.disabled      = false;
 }
 
 // ── Open share modal ───────────────────────────────────────
