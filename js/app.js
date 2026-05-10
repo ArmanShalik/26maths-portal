@@ -204,41 +204,57 @@ function rotateCry() {
   }, 300);
 }
 
-// ── JSONP helper — works from any origin with Apps Script ──
-// Apps Script redirects via 302; plain fetch often fails across
-// origins (GitHub Pages, local file://). JSONP is bulletproof.
-function jsonpFetch(url) {
-  return new Promise((resolve, reject) => {
-    const cbName = "__gsCb_" + Date.now() + "_" + Math.random().toString(36).slice(2);
-    const script = document.createElement("script");
+// ── Network: JSONP call to Apps Script ───────────────────
+// Apps Script web apps do not return CORS headers, so plain
+// fetch() always fails cross-origin. JSONP (script tag injection)
+// is the correct and only reliable method.
+function gsCall(url, timeoutMs) {
+  timeoutMs = timeoutMs || 8000;
+  return new Promise(function(resolve, reject) {
+    var id     = "__gs_" + Date.now() + "_" + Math.floor(Math.random() * 1e9);
+    var script = document.createElement("script");
+    var done   = false;
 
-    const timer = setTimeout(() => {
+    var timer = setTimeout(function() {
+      if (done) return;
+      done = true;
       cleanup();
-      reject(new Error("Request timed out (15 s). Check your API_URL in config.js."));
-    }, 15000);
+      reject(new Error(
+        "Timed out after " + (timeoutMs/1000) + "s.\n\n" +
+        "Check the following:\n" +
+        "1. API_URL in config.js matches your deployed Web App URL exactly.\n" +
+        "2. Code.gs is deployed as a Web App (Deploy → Manage Deployments).\n" +
+        "3. 'Who has access' is set to Anyone (not 'Anyone with Google Account').\n" +
+        "4. After editing Code.gs you created a NEW version when redeploying."
+      ));
+    }, timeoutMs);
 
     function cleanup() {
       clearTimeout(timer);
-      delete window[cbName];
+      delete window[id];
       if (script.parentNode) script.parentNode.removeChild(script);
     }
 
-    window[cbName] = function(data) {
+    window[id] = function(data) {
+      if (done) return;
+      done = true;
       cleanup();
       resolve(data);
     };
 
-    script.src   = url + "&callback=" + cbName;
     script.onerror = function() {
+      if (done) return;
+      done = true;
       cleanup();
       reject(new Error(
-        "Script load failed. Possible causes:\n" +
-        "1. API_URL in config.js is wrong or empty.\n" +
-        "2. Apps Script not deployed as Web App.\n" +
-        "3. 'Who has access' is not set to 'Anyone'.\n" +
-        "4. You have no internet connection."
+        "Could not reach the Apps Script URL.\n\n" +
+        "1. Check that API_URL in config.js is correct.\n" +
+        "2. Open the API_URL directly in your browser — it should show JSON.\n" +
+        "3. Make sure 'Who has access' is set to Anyone."
       ));
     };
+
+    script.src = url + (url.indexOf("?") === -1 ? "?" : "&") + "callback=" + id;
     document.head.appendChild(script);
   });
 }
@@ -255,39 +271,27 @@ async function lookup() {
   setSearchBtn(true);
   Charts.destroyAll();
 
-  // Validate API_URL
-  if (!CONFIG.API_URL || CONFIG.API_URL.trim() === "" ||
+  // Quick config check before even making a request
+  if (!CONFIG.API_URL ||
+      CONFIG.API_URL.trim() === "" ||
+      CONFIG.API_URL === "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec" ||
       CONFIG.API_URL.indexOf("script.google.com") === -1) {
     showSpinner(false);
     setSearchBtn(false);
-    setError(
-      "⚠ API_URL is not set correctly in config.js. " +
-      "Open js/config.js and paste your Apps Script Web App URL into API_URL."
-    );
+    setError("⚠ API_URL in config.js is not set. Open js/config.js and paste your Apps Script Web App URL.");
     return;
   }
 
-  const url = `${CONFIG.API_URL}?action=getFullData&query=${encodeURIComponent(q)}`;
+  const url = CONFIG.API_URL + "?action=getFullData&query=" + encodeURIComponent(q);
 
   try {
-    // Try JSONP first (most reliable with Apps Script)
-    const data = await jsonpFetch(url);
+    const data = await gsCall(url, 8000);
     onData(data);
-  } catch (jsonpErr) {
-    // JSONP failed — try plain fetch as last resort
-    try {
-      const res  = await fetch(url, { redirect: "follow" });
-      const data = await res.json();
-      onData(data);
-    } catch (fetchErr) {
-      showSpinner(false);
-      setSearchBtn(false);
-      // Show the real diagnostic error
-      const msg = jsonpErr.message || "Unknown error";
-      setError("❌ " + msg);
-      console.error("[Portal] JSONP error:", jsonpErr);
-      console.error("[Portal] Fetch error:", fetchErr);
-    }
+  } catch (err) {
+    showSpinner(false);
+    setSearchBtn(false);
+    setError("❌ " + err.message);
+    console.error("[Portal] Fetch error:", err);
   }
 }
 
@@ -497,7 +501,7 @@ async function downloadPDF() {
 
   try {
     const url  = `${CONFIG.API_URL}?action=getPDF&query=${encodeURIComponent(currentQuery)}`;
-    const data = await jsonpFetch(url);
+    const data = await gsCall(url, 20000);
     if (data.error) { setError(data.error); }
     else {
       const bytes   = atob(data.pdf);
