@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Combined Maths — Battle Station 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<!-- ── SCANLINE OVERLAY ────────────────────────────────────── -->
+<div class="scanlines" aria-hidden="true"></div>
+
+<div class="wrapper">
+
+  <!-- ── HEADER ──────────────────────────────────────────── -->
+  <header>
+    <div class="brand-symbol" id="brandSymbol">∑</div>
+    <h1 class="site-title">Arman Teaches <span>Math</span></h1>
+    <p class="site-subtitle" id="yearLabel">G.C.E. Advanced Level · 2026</p>
+    <div class="deco-line"><span>BATTLE STATION · AUGUST 2026 BATCH</span></div>
+  </header>
+
+  <!-- ── EXAM COUNTDOWN HERO ─────────────────────────────── -->
+  <section class="countdown-hero" id="countdownHero">
+
+    <div class="countdown-title-row">
+      <span class="fire-icon">⚡</span>
+      <span class="countdown-title-text">TIME REMAINING UNTIL YOUR EXAM</span>
+      <span class="fire-icon">⚡</span>
+    </div>
+
+    <div class="countdown-clock" id="countdownClock">
+      <div class="countdown-unit">
+        <div class="countdown-val bebas" id="cdDays">092</div>
+        <div class="countdown-unit-label">DAYS</div>
+      </div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-unit">
+        <div class="countdown-val bebas" id="cdHours">00</div>
+        <div class="countdown-unit-label">HRS</div>
+      </div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-unit">
+        <div class="countdown-val bebas" id="cdMins">00</div>
+        <div class="countdown-unit-label">MIN</div>
+      </div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-unit">
+        <div class="countdown-val bebas" id="cdSecs">00</div>
+        <div class="countdown-unit-label">SEC</div>
+      </div>
+    </div>
+
+    <div class="countdown-exam-info">
+      <span id="examDateLabel">G.C.E. ADVANCED LEVEL &nbsp;·&nbsp; AUGUST 10, 2026</span>
+    </div>
+
+    <!-- Prep-progress timeline bar -->
+    <div class="prep-timeline" id="prepTimeline">
+      <div class="prep-tl-top">
+        <span class="prep-tl-label">PREP WINDOW USED</span>
+        <span class="prep-tl-pct" id="prepPct">0%</span>
+      </div>
+      <div class="prep-bar-track">
+        <div class="prep-bar-fill" id="prepBarFill" style="width:0%"></div>
+        <div class="prep-bar-marker" id="prepBarMarker" style="left:0%"></div>
+      </div>
+      <div class="prep-tl-ends">
+        <span id="prepStartLabel">TODAY</span>
+        <span class="prep-tl-exam">EXAM DAY 🎯</span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ── BATTLE CRY BANNER ───────────────────────────────── -->
+  <div class="battle-banner" id="battleBanner">
+    <div class="battle-cry-text" id="battleCryText">Every hour you waste is a mark you can't earn back.</div>
+  </div>
+
+  <!-- ── SEARCH ───────────────────────────────────────────── -->
+  <div class="search-card">
+    <span class="search-label">🔍 &nbsp;Student Lookup — Check Your Marks</span>
+    <div class="search-row">
+      <input type="text" id="queryInput" class="search-input"
+             placeholder="Enter your NIC or Index Number…"
+             autocomplete="off" spellcheck="false"/>
+      <button class="search-btn" id="searchBtn" onclick="lookup()">Search</button>
+    </div>
+    <p class="search-hint">e.g. 200x12345678 &nbsp;or&nbsp; MLx00xx</p>
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <!-- ── LOADING ───────────────────────────────────────────── -->
+  <div class="spinner-wrap" id="spinnerWrap">
+    <div class="spinner"></div>
+    <span class="spinner-text">Fetching records…</span>
+  </div>
+
+  <!-- ── RESULTS ───────────────────────────────────────────── -->
+  <div id="results">
+
+    <!-- Student banner + action buttons -->
+    <div class="student-banner">
+      <div class="student-name">
+        <small>Results for</small>
+        <span id="studentName"></span>
+      </div>
+      <div class="action-row">
+        <button class="btn-whatsapp" onclick="openShare()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+          Share Result
+        </button>
+        <button class="btn-outline" id="dlBtn" onclick="downloadPDF()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Motivational quote -->
+    <div class="quote-card" id="quoteCard" style="display:none">
+      <div class="quote-label">⚡ &nbsp;Your Personal Challenge</div>
+      <div class="quote-text" id="quoteText"></div>
+      <div class="quote-days-left" id="quoteDaysLeft"></div>
+    </div>
+
+    <!-- Current paper marks -->
+    <div class="section-label">Latest Paper</div>
+    <div id="marksPanel"></div>
+
+    <!-- Charts -->
+    <div class="charts-grid" id="chartsGrid" style="display:none">
+      <div class="chart-card full">
+        <div class="chart-title">📈 &nbsp;Your Performance Across Papers</div>
+        <div class="chart-canvas-wrap" style="height:220px"><canvas id="trendChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">📊 &nbsp;Latest Paper — Class Comparison</div>
+        <div class="chart-canvas-wrap" style="height:200px"><canvas id="compareChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">⚖️ &nbsp;Part A vs Part B (All Papers)</div>
+        <div class="chart-canvas-wrap" style="height:200px"><canvas id="partsChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Paper analysis -->
+    <div id="paperAnalysisSection" style="display:none">
+      <div class="section-label">Overall Paper Analysis</div>
+      <div class="marks-panel">
+        <div id="paperSummaryRow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border)"></div>
+        <div style="padding:20px">
+          <div class="chart-title">📐 &nbsp;Question-by-Question Class Performance</div>
+          <div class="chart-canvas-wrap" style="height:240px"><canvas id="questionChart"></canvas></div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="qa-table">
+            <thead><tr>
+              <th>Q</th><th>Topic</th><th>Max</th>
+              <th>Attempted</th><th>Correct</th><th>Avg</th><th>Success</th>
+            </tr></thead>
+            <tbody id="qaBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tutor review -->
+    <div id="reviewPanel"></div>
+
+    <!-- History -->
+    <div id="historySection" style="display:none">
+      <div class="section-label" style="margin-top:28px">All Papers History</div>
+      <div class="marks-panel">
+        <table class="history-table">
+          <thead><tr>
+            <th>Paper</th><th>Date</th>
+            <th>Part A</th><th>Part B</th>
+            <th>Total</th><th>%</th><th>Grade</th>
+          </tr></thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /results -->
+
+  <footer>
+    <div class="footer-inner">
+      <span>© 2026 Combined Maths Battle Station</span>
+      <span class="footer-dot">·</span>
+      <span>August 10, 2026 — The Clock Is Running</span>
+    </div>
+  </footer>
+</div><!-- /wrapper -->
+
+<!-- Scripts — load in order -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/share.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

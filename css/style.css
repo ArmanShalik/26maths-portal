@@ -1,0 +1,644 @@
+/* ============================================================
+   COMBINED MATHS — BATTLE STATION 2026
+   Exam Urgency Portal Stylesheet
+   ============================================================ */
+
+/* ── Tokens ─────────────────────────────────────────────── */
+:root {
+  --bg         : #060810;
+  --surface    : #0b0e1a;
+  --surface2   : #10142200;
+  --border     : rgba(212,168,67,0.18);
+  --border-red : rgba(255,75,31,0.3);
+
+  --gold       : #d4a843;
+  --gold-dim   : rgba(212,168,67,0.55);
+  --gold-glow  : rgba(212,168,67,0.12);
+
+  --fire       : #ff4b1f;
+  --fire-mid   : #ff6b35;
+  --fire-amber : #ffb347;
+  --fire-glow  : rgba(255,75,31,0.15);
+  --fire-glow2 : rgba(255,107,53,0.08);
+
+  --cream      : #f5efe0;
+  --cream-dim  : rgba(245,239,224,0.55);
+
+  --green      : #4ade80;
+  --green-bg   : rgba(74,222,128,0.08);
+  --red        : #f87171;
+  --red-bg     : rgba(248,113,113,0.08);
+  --blue       : #60a5fa;
+  --blue-bg    : rgba(96,165,250,0.08);
+  --purple     : #c084fc;
+
+  --fh  : 'Playfair Display', Georgia, serif;
+  --fm  : 'DM Mono', monospace;
+  --fb  : 'DM Sans', system-ui, sans-serif;
+  --bbn : 'Bebas Neue', impact, sans-serif;
+
+  --r  : 12px;
+  --rs : 7px;
+}
+
+/* ── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background  : var(--bg);
+  color       : var(--cream);
+  font-family : var(--fb);
+  font-size   : 15px;
+  line-height : 1.6;
+  min-height  : 100vh;
+  overflow-x  : hidden;
+}
+
+/* ── Math grid background ───────────────────────────────── */
+body::before {
+  content         : "";
+  position        : fixed;
+  inset           : 0;
+  background-image: linear-gradient(rgba(212,168,67,0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(212,168,67,0.03) 1px, transparent 1px);
+  background-size : 52px 52px;
+  pointer-events  : none;
+  z-index         : 0;
+}
+
+/* ── Scanline overlay (battle station feel) ─────────────── */
+.scanlines {
+  position        : fixed;
+  inset           : 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.08) 3px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events  : none;
+  z-index         : 0;
+}
+
+/* ── Top ambient glow ───────────────────────────────────── */
+body::after {
+  content    : "";
+  position   : fixed;
+  top        : -150px;
+  left       : 50%;
+  transform  : translateX(-50%);
+  width      : 900px;
+  height     : 700px;
+  background : radial-gradient(ellipse at 50% 20%,
+    rgba(255,107,53,0.06) 0%,
+    rgba(212,168,67,0.05) 40%,
+    transparent 70%);
+  pointer-events: none;
+  z-index    : 0;
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
+.wrapper {
+  position  : relative;
+  z-index   : 1;
+  max-width : 920px;
+  margin    : 0 auto;
+  padding   : 0 16px 80px;
+}
+
+/* ── Animations ─────────────────────────────────────────── */
+@keyframes float      { 0%,100%{transform:translateY(0)}  50%{transform:translateY(-6px)} }
+@keyframes fadeUp     { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+@keyframes spin       { to{transform:rotate(360deg)} }
+@keyframes pulseFire  { 0%,100%{box-shadow:0 0 20px var(--fire-glow)} 50%{box-shadow:0 0 50px rgba(255,75,31,0.35)} }
+@keyframes pulseAmber { 0%,100%{opacity:.8} 50%{opacity:1} }
+@keyframes shimmer    { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+@keyframes tickFlash  { 0%{opacity:1} 49%{opacity:1} 50%{opacity:0} 99%{opacity:0} 100%{opacity:1} }
+@keyframes battleSlide{ from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)} }
+@keyframes prepFill   { from{width:0} to{width:var(--target-w)} }
+@keyframes borderFire {
+  0%  { border-color: rgba(255,75,31,0.4); }
+  50% { border-color: rgba(255,179,71,0.8); }
+  100%{ border-color: rgba(255,75,31,0.4); }
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+header { text-align: center; padding: 48px 0 36px; }
+
+.brand-symbol {
+  display         : inline-flex;
+  align-items     : center;
+  justify-content : center;
+  width           : 72px;
+  height          : 72px;
+  border          : 1.5px solid var(--border);
+  border-radius   : 18px;
+  background      : var(--surface);
+  margin-bottom   : 20px;
+  font-family     : var(--fm);
+  font-size       : 28px;
+  color           : var(--gold);
+  box-shadow      : 0 0 40px var(--gold-glow);
+  animation       : float 4s ease-in-out infinite;
+  overflow        : hidden;
+}
+.brand-symbol img { width:100%; height:100%; object-fit:contain; border-radius:16px; }
+
+h1.site-title {
+  font-family   : var(--fh);
+  font-size     : clamp(26px, 5vw, 40px);
+  font-weight   : 900;
+  color         : var(--cream);
+  letter-spacing: -0.5px;
+  line-height   : 1.1;
+}
+h1.site-title span { color: var(--gold); }
+
+.site-subtitle {
+  margin-top    : 10px;
+  font-size     : 11px;
+  font-family   : var(--fm);
+  color         : var(--cream-dim);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+}
+
+.deco-line {
+  display        : flex;
+  align-items    : center;
+  gap            : 12px;
+  margin         : 22px auto 0;
+  max-width      : 380px;
+  justify-content: center;
+}
+.deco-line::before,.deco-line::after { content:""; flex:1; height:1px; background:var(--border); }
+.deco-line span {
+  font-family   : var(--fm);
+  font-size     : 10px;
+  color         : var(--fire-mid);
+  letter-spacing: 1.5px;
+  white-space   : nowrap;
+}
+
+/* ── Countdown Hero ─────────────────────────────────────── */
+.countdown-hero {
+  background   : linear-gradient(180deg, rgba(255,75,31,0.06) 0%, rgba(10,13,22,0) 100%);
+  border       : 1px solid rgba(255,107,53,0.25);
+  border-radius: 16px;
+  padding      : 40px 32px 32px;
+  margin-bottom: 18px;
+  text-align   : center;
+  position     : relative;
+  overflow     : hidden;
+  animation    : fadeUp .5s ease both;
+}
+.countdown-hero::before {
+  content    : "";
+  position   : absolute;
+  top        : 0;
+  left       : 50%;
+  transform  : translateX(-50%);
+  width      : 80%;
+  height     : 1px;
+  background : linear-gradient(90deg, transparent, var(--fire-mid), transparent);
+}
+
+.countdown-title-row {
+  display        : flex;
+  align-items    : center;
+  justify-content: center;
+  gap            : 10px;
+  margin-bottom  : 28px;
+}
+.countdown-title-text {
+  font-family   : var(--fm);
+  font-size     : 11px;
+  letter-spacing: 3px;
+  color         : var(--fire-mid);
+  text-transform: uppercase;
+}
+.fire-icon { font-size: 14px; animation: pulseAmber 1.5s ease-in-out infinite; }
+
+/* ── Clock ──────────────────────────────────────────────── */
+.countdown-clock {
+  display        : flex;
+  align-items    : center;
+  justify-content: center;
+  gap            : 8px;
+  margin-bottom  : 20px;
+  transition     : all .4s ease;
+}
+
+.countdown-unit { text-align: center; }
+
+.countdown-val {
+  font-size    : clamp(60px, 14vw, 104px);
+  line-height  : 1;
+  color        : var(--cream);
+  letter-spacing: 2px;
+  transition   : color .4s ease, text-shadow .4s ease;
+}
+.countdown-val.bebas { font-family: var(--bbn); }
+
+.countdown-sep {
+  font-family  : var(--bbn);
+  font-size    : clamp(48px, 10vw, 80px);
+  color        : rgba(212,168,67,0.4);
+  line-height  : 1;
+  margin-bottom: 20px;
+  animation    : tickFlash 2s step-end infinite;
+}
+
+.countdown-unit-label {
+  font-family   : var(--fm);
+  font-size     : 10px;
+  letter-spacing: 2.5px;
+  color         : var(--gold-dim);
+  text-transform: uppercase;
+  margin-top    : 6px;
+}
+
+/* Urgency colour states */
+.countdown-clock .countdown-val { color: var(--cream); text-shadow: none; }
+
+.countdown-clock.urgent-mid .countdown-val {
+  color      : var(--fire-amber);
+  text-shadow: 0 0 30px rgba(255,179,71,0.3);
+}
+.countdown-clock.urgent-high .countdown-val {
+  color      : var(--fire-mid);
+  text-shadow: 0 0 40px rgba(255,107,53,0.5);
+}
+.countdown-clock.urgent-critical .countdown-val {
+  color      : var(--fire);
+  text-shadow: 0 0 50px rgba(255,75,31,0.7);
+  animation  : pulseAmber .6s ease-in-out infinite;
+}
+
+.countdown-exam-info {
+  font-family   : var(--fm);
+  font-size     : 11px;
+  letter-spacing: 2px;
+  color         : var(--cream-dim);
+  text-transform: uppercase;
+  margin-bottom : 24px;
+}
+
+/* ── Prep Timeline Bar ──────────────────────────────────── */
+.prep-timeline {
+  max-width    : 580px;
+  margin       : 0 auto;
+}
+.prep-tl-top {
+  display        : flex;
+  justify-content: space-between;
+  margin-bottom  : 8px;
+}
+.prep-tl-label {
+  font-family   : var(--fm);
+  font-size     : 9px;
+  letter-spacing: 2px;
+  color         : rgba(240,230,200,0.3);
+  text-transform: uppercase;
+}
+.prep-tl-pct {
+  font-family   : var(--fm);
+  font-size     : 10px;
+  color         : var(--fire-mid);
+  letter-spacing: 1px;
+}
+.prep-bar-track {
+  position     : relative;
+  width        : 100%;
+  height       : 5px;
+  background   : rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow     : visible;
+  margin-bottom: 8px;
+}
+.prep-bar-fill {
+  height       : 5px;
+  border-radius: 3px;
+  background   : linear-gradient(90deg, var(--fire) 0%, var(--fire-amber) 100%);
+  transition   : width 1.5s cubic-bezier(.25,.8,.25,1);
+  position     : relative;
+}
+.prep-bar-marker {
+  position     : absolute;
+  top          : 50%;
+  transform    : translate(-50%, -50%);
+  width        : 12px;
+  height       : 12px;
+  border-radius: 50%;
+  background   : var(--fire-amber);
+  border       : 2px solid var(--bg);
+  box-shadow   : 0 0 8px var(--fire-mid);
+  transition   : left 1.5s cubic-bezier(.25,.8,.25,1);
+}
+.prep-tl-ends {
+  display        : flex;
+  justify-content: space-between;
+}
+.prep-tl-ends span {
+  font-family   : var(--fm);
+  font-size     : 9px;
+  letter-spacing: 1.5px;
+  color         : rgba(240,230,200,0.25);
+  text-transform: uppercase;
+}
+.prep-tl-exam { color: var(--fire-mid) !important; }
+
+/* ── Battle Banner ──────────────────────────────────────── */
+.battle-banner {
+  background    : linear-gradient(135deg, rgba(255,75,31,0.08) 0%, rgba(255,179,71,0.06) 100%);
+  border        : 1px solid rgba(255,107,53,0.2);
+  border-radius : var(--r);
+  padding       : 16px 24px;
+  margin-bottom : 24px;
+  text-align    : center;
+  animation     : borderFire 3s ease-in-out infinite;
+  min-height    : 52px;
+  display       : flex;
+  align-items   : center;
+  justify-content: center;
+}
+.battle-cry-text {
+  font-family  : var(--fh);
+  font-style   : italic;
+  font-size    : clamp(14px, 2.5vw, 17px);
+  color        : var(--cream);
+  line-height  : 1.5;
+  animation    : battleSlide .5s ease both;
+  letter-spacing: 0.3px;
+}
+
+/* ── Search card ─────────────────────────────────────────── */
+.search-card {
+  background    : var(--surface);
+  border        : 1px solid var(--border);
+  border-radius : var(--r);
+  padding       : 28px 24px;
+  margin-bottom : 28px;
+  box-shadow    : 0 24px 80px rgba(0,0,0,.4);
+  animation     : fadeUp .6s ease .1s both;
+}
+.search-label {
+  font-family   : var(--fm);
+  font-size     : 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color         : var(--gold);
+  margin-bottom : 12px;
+  display       : block;
+}
+.search-row { display: flex; gap: 10px; align-items: stretch; }
+
+.search-input {
+  flex          : 1;
+  background    : rgba(16,20,34,0.9);
+  border        : 1px solid var(--border);
+  border-radius : var(--rs);
+  padding       : 14px 16px;
+  font-family   : var(--fm);
+  font-size     : 16px;
+  color         : var(--cream);
+  outline       : none;
+  transition    : border-color .2s, box-shadow .2s;
+  letter-spacing: 1px;
+  min-width     : 0;
+}
+.search-input::placeholder { color:rgba(245,239,224,.22); font-size:14px; font-family:var(--fb); letter-spacing:0; }
+.search-input:focus { border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-glow); }
+
+.search-btn {
+  background    : var(--gold);
+  color         : #08090f;
+  border        : none;
+  border-radius : var(--rs);
+  padding       : 0 24px;
+  font-family   : var(--fb);
+  font-size     : 14px;
+  font-weight   : 600;
+  cursor        : pointer;
+  transition    : background .2s, transform .15s, box-shadow .2s;
+  white-space   : nowrap;
+  flex-shrink   : 0;
+}
+.search-btn:hover  { background:#e8bc55; box-shadow:0 4px 20px rgba(212,168,67,.3); }
+.search-btn:active { transform:scale(.97); }
+
+.search-hint { margin-top:10px; font-size:12px; color:var(--cream-dim); font-family:var(--fm); }
+
+.error-box {
+  background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.3);
+  border-radius:var(--rs); padding:12px 16px; color:var(--red);
+  font-family:var(--fm); font-size:13px; margin-top:14px; display:none;
+}
+
+/* ── Spinner ─────────────────────────────────────────────── */
+.spinner-wrap { display:none; justify-content:center; align-items:center; padding:48px; flex-direction:column; gap:14px; }
+.spinner { width:34px; height:34px; border:2px solid var(--border); border-top:2px solid var(--gold); border-radius:50%; animation:spin .8s linear infinite; }
+.spinner-text { font-family:var(--fm); font-size:12px; color:var(--cream-dim); letter-spacing:1.5px; text-transform:uppercase; }
+
+/* ── Section label ───────────────────────────────────────── */
+.section-label {
+  font-family   : var(--fm);
+  font-size     : 10px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color         : var(--gold-dim);
+  margin-bottom : 14px;
+  display       : flex;
+  align-items   : center;
+  gap           : 10px;
+}
+.section-label::after { content:""; flex:1; height:1px; background:var(--border); }
+
+/* ── Student banner ──────────────────────────────────────── */
+#results { display:none; animation:fadeUp .5s ease both; }
+.student-banner {
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:12px; margin-bottom:22px;
+}
+.student-name { font-family:var(--fh); font-size:clamp(20px,4vw,30px); font-weight:700; }
+.student-name small {
+  display:block; font-family:var(--fm); font-size:11px; color:var(--gold);
+  text-transform:uppercase; letter-spacing:2px; font-weight:400; margin-bottom:4px;
+}
+
+/* ── Action buttons ──────────────────────────────────────── */
+.action-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
+.btn-outline {
+  display:inline-flex; align-items:center; gap:7px; background:transparent;
+  border:1.5px solid var(--gold); color:var(--gold); border-radius:var(--rs);
+  padding:9px 18px; font-family:var(--fb); font-size:13px; font-weight:600;
+  cursor:pointer; transition:all .2s; white-space:nowrap;
+}
+.btn-outline:hover { background:var(--gold); color:#08090f; box-shadow:0 4px 20px rgba(212,168,67,.3); }
+
+.btn-whatsapp {
+  display:inline-flex; align-items:center; gap:7px; background:#25d366;
+  border:1.5px solid #25d366; color:#fff; border-radius:var(--rs);
+  padding:9px 18px; font-family:var(--fb); font-size:13px; font-weight:600;
+  cursor:pointer; transition:all .2s; white-space:nowrap;
+}
+.btn-whatsapp:hover { background:#1db954; border-color:#1db954; box-shadow:0 4px 20px rgba(37,211,102,.3); }
+
+/* ── Quote / Challenge card ──────────────────────────────── */
+.quote-card {
+  background   : linear-gradient(135deg, rgba(255,75,31,0.08) 0%, rgba(11,14,26,1) 60%);
+  border       : 1px solid rgba(255,107,53,0.3);
+  border-left  : 3px solid var(--fire-mid);
+  border-radius: var(--r);
+  padding      : 22px 26px;
+  margin-bottom: 20px;
+  position     : relative;
+  overflow     : hidden;
+}
+.quote-card::before {
+  content   : "❝";
+  position  : absolute;
+  top       : -10px;
+  right     : 14px;
+  font-size : 80px;
+  color     : rgba(255,107,53,0.1);
+  font-family: Georgia, serif;
+  line-height: 1;
+}
+.quote-label {
+  font-family:var(--fm); font-size:10px; color:var(--fire-mid);
+  text-transform:uppercase; letter-spacing:2px; margin-bottom:10px;
+}
+.quote-text {
+  font-family:var(--fh); font-size:16px; font-style:italic;
+  color:var(--cream); line-height:1.75; position:relative; z-index:1;
+  margin-bottom: 12px;
+}
+.quote-days-left {
+  font-family   : var(--fm);
+  font-size     : 11px;
+  color         : var(--fire-mid);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* ── Marks panel ─────────────────────────────────────────── */
+.marks-panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; margin-bottom:20px; }
+.marks-topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px; border-bottom:1px solid var(--border); gap:10px; flex-wrap:wrap;
+}
+.paper-title { font-family:var(--fh); font-size:16px; font-weight:700; }
+.paper-date  { font-family:var(--fm); font-size:12px; color:var(--cream-dim); }
+.badge-latest { font-family:var(--fm); font-size:11px; padding:3px 10px; border-radius:50px; background:var(--gold-glow); border:1px solid var(--gold); color:var(--gold); }
+
+/* ── Score grid ──────────────────────────────────────────── */
+.score-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); }
+.score-cell { background:var(--surface); padding:22px 16px; text-align:center; }
+.score-value { font-family:var(--fm); font-size:30px; font-weight:500; color:var(--cream); line-height:1; }
+.score-max   { font-size:14px; color:var(--cream-dim); }
+.score-pct   { font-family:var(--fm); font-size:12px; color:var(--gold-dim); margin-top:4px; }
+.score-bar   { width:100%; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; margin-top:8px; overflow:hidden; }
+.score-bar-fill { height:4px; border-radius:2px; background:linear-gradient(90deg,var(--gold),#e8bc55); transition:width 1s cubic-bezier(.25,.8,.25,1); }
+.score-label { font-family:var(--fm); font-size:10px; text-transform:uppercase; letter-spacing:2px; color:var(--cream-dim); margin-top:8px; }
+
+/* ── Class comparison ────────────────────────────────────── */
+.class-compare { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); border-top:1px solid var(--border); }
+.cc-cell { background:rgba(16,20,34,0.9); padding:12px 16px; text-align:center; }
+.cc-val  { font-family:var(--fm); font-size:15px; color:var(--blue); }
+.cc-val.you { color:var(--gold); }
+.cc-val.top { color:var(--green); }
+.cc-lbl  { font-family:var(--fm); font-size:9px; text-transform:uppercase; letter-spacing:1.5px; color:var(--cream-dim); margin-top:3px; }
+
+.rank-badge {
+  display:inline-flex; align-items:center; gap:6px; background:var(--gold-glow);
+  border:1px solid var(--gold); border-radius:50px; padding:6px 14px;
+  font-family:var(--fm); font-size:12px; color:var(--gold); margin-top:12px;
+}
+
+/* ── Review blocks ───────────────────────────────────────── */
+.review-section { padding:20px; display:grid; gap:14px; }
+.review-block { background:rgba(16,20,34,0.8); border-radius:var(--rs); padding:16px 18px; border-left:3px solid transparent; }
+.review-block.good    { border-color:var(--green); }
+.review-block.improve { border-color:var(--fire);  }
+.review-block.notes   { border-color:var(--blue);  }
+.review-block-title { font-family:var(--fm); font-size:10px; text-transform:uppercase; letter-spacing:2px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+.review-block.good    .review-block-title { color:var(--green); }
+.review-block.improve .review-block-title { color:var(--fire);  }
+.review-block.notes   .review-block-title { color:var(--blue);  }
+.tags-wrap { display:flex; flex-wrap:wrap; gap:7px; }
+.tag { font-family:var(--fm); font-size:12px; padding:4px 11px; border-radius:50px; }
+.tag-good { background:var(--green-bg); color:var(--green); border:1px solid rgba(74,222,128,.25); }
+.tag-bad  { background:var(--red-bg);   color:var(--red);   border:1px solid rgba(248,113,113,.25); }
+.review-text { color:var(--cream); font-size:14px; line-height:1.75; }
+
+/* ── Charts grid ─────────────────────────────────────────── */
+.charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+.chart-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:20px; }
+.chart-card.full { grid-column:1/-1; }
+.chart-title { font-family:var(--fm); font-size:10px; text-transform:uppercase; letter-spacing:2px; color:var(--gold-dim); margin-bottom:16px; }
+.chart-canvas-wrap { position:relative; width:100%; }
+
+/* ── Paper analysis table ────────────────────────────────── */
+.qa-table { width:100%; border-collapse:collapse; font-family:var(--fm); font-size:12px; }
+.qa-table thead tr { border-bottom:1px solid var(--border); }
+.qa-table th { text-transform:uppercase; letter-spacing:1.5px; font-size:9px; color:var(--gold-dim); padding:10px 12px; text-align:left; font-weight:500; }
+.qa-table td { padding:11px 12px; color:var(--cream-dim); border-bottom:1px solid rgba(212,168,67,.05); }
+.qa-table tr:last-child td { border-bottom:none; }
+.qa-table .num { color:var(--cream); }
+.attempt-bar-wrap { display:flex; align-items:center; gap:8px; }
+.attempt-bar { flex:1; height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden; min-width:60px; }
+.attempt-bar-fill { height:6px; border-radius:3px; background:linear-gradient(90deg,var(--blue),#818cf8); }
+.rate-high { color:var(--green); }
+.rate-mid  { color:var(--gold);  }
+.rate-low  { color:var(--red);   }
+
+/* ── History table ───────────────────────────────────────── */
+.history-table { width:100%; border-collapse:collapse; font-family:var(--fm); font-size:13px; }
+.history-table thead tr { border-bottom:1px solid var(--border); }
+.history-table th { text-transform:uppercase; letter-spacing:1.5px; font-size:10px; color:var(--gold-dim); padding:11px 14px; text-align:left; font-weight:500; }
+.history-table td { padding:13px 14px; color:var(--cream-dim); border-bottom:1px solid rgba(212,168,67,.05); transition:color .2s; }
+.history-table tr:hover td { color:var(--cream); background:rgba(212,168,67,.03); cursor:pointer; }
+.history-table .num { color:var(--cream); }
+
+/* ── Share modal ─────────────────────────────────────────── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(6,8,16,0.9);
+  backdrop-filter:blur(10px); z-index:100;
+  display:flex; align-items:center; justify-content:center;
+  padding:16px; animation:fadeUp .2s ease;
+}
+.modal-box {
+  background:var(--surface); border:1px solid var(--border); border-radius:16px;
+  padding:28px 24px; width:100%; max-width:480px;
+  box-shadow:0 40px 100px rgba(0,0,0,.7);
+}
+.modal-title    { font-family:var(--fh); font-size:20px; font-weight:700; margin-bottom:6px; }
+.modal-subtitle { font-family:var(--fm); font-size:11px; color:var(--cream-dim); letter-spacing:1px; margin-bottom:20px; }
+.card-preview-wrap { background:rgba(16,20,34,0.8); border:1px solid var(--border); border-radius:var(--rs); padding:12px; margin-bottom:16px; text-align:center; }
+#shareCardCanvas { border-radius:8px; max-width:100%; }
+.modal-actions { display:flex; gap:10px; flex-wrap:wrap; }
+.modal-close { background:transparent; border:1px solid var(--border); color:var(--cream-dim); border-radius:var(--rs); padding:9px 16px; font-family:var(--fb); font-size:13px; cursor:pointer; transition:all .2s; margin-left:auto; }
+.modal-close:hover { border-color:var(--red); color:var(--red); }
+
+/* ── Footer ──────────────────────────────────────────────── */
+footer { text-align:center; margin-top:50px; padding-top:22px; border-top:1px solid var(--border); }
+.footer-inner { display:inline-flex; align-items:center; gap:10px; font-family:var(--fm); font-size:11px; color:rgba(245,239,224,.2); letter-spacing:1px; flex-wrap:wrap; justify-content:center; }
+.footer-dot { color:var(--fire-mid); opacity:.4; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .countdown-hero { padding:28px 16px 24px; }
+  .countdown-sep  { margin-bottom:16px; }
+  .charts-grid    { grid-template-columns:1fr; }
+  .chart-card.full{ grid-column:auto; }
+  .score-grid     { grid-template-columns:repeat(3,1fr); }
+  .search-row     { flex-direction:column; }
+  .search-btn     { padding:14px; }
+  .action-row     { flex-direction:column; }
+  .btn-outline,.btn-whatsapp { width:100%; justify-content:center; }
+  .history-table th:nth-child(3),.history-table td:nth-child(3),
+  .history-table th:nth-child(4),.history-table td:nth-child(4) { display:none; }
+}
