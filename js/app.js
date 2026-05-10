@@ -60,9 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
       `${CONFIG.EXAM_LABEL || "G.C.E. ADVANCED LEVEL"} · ${d.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}).toUpperCase()}`;
   }
 
-  // Init countdown
-  initCountdown();
-
   // Init battle cry rotation
   initBattleCry();
 
@@ -75,86 +72,82 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ── Countdown ─────────────────────────────────────────────
-let _countdownInterval = null;
+// Completely isolated — no CONFIG dependency inside tick,
+// no DOM calls that can throw, wrapped in try-catch.
+// ── Countdown ─────────────────────────────────────────────
+// Runs as soon as the DOM is ready. No CONFIG dependency.
+// Completely isolated from the rest of the app — errors in
+// other scripts cannot stop this clock.
+(function startCountdown() {
 
-function initCountdown() {
-  // Resolve exam date — fall back to hardcoded date if config missing
-  const examDateStr = (typeof CONFIG !== "undefined" && CONFIG.EXAM_DATE)
-    ? CONFIG.EXAM_DATE
-    : "2026-08-10";
+  var EXAM_YEAR  = 2026;
+  var EXAM_MONTH = 8;   // August
+  var EXAM_DAY   = 10;
 
-  // Parse as local midnight to avoid timezone shifting the day
-  const parts    = examDateStr.split("-").map(Number);
-  const examDate = new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0);
+  // Local midnight — avoids UTC timezone shifting the date
+  var examTs = new Date(EXAM_YEAR, EXAM_MONTH - 1, EXAM_DAY, 0, 0, 0, 0).getTime();
+
+  function pad(n, width) {
+    var s = String(n < 0 ? 0 : Math.floor(n));
+    while (s.length < width) s = "0" + s;
+    return s;
+  }
 
   function setText(id, val) {
     var el = document.getElementById(id);
     if (el) el.textContent = val;
   }
 
-  function tick() {
-    var now  = new Date();
-    var diff = examDate.getTime() - now.getTime();
+  var timerHandle = null;
 
-    if (diff <= 0) {
-      // Exam has arrived — clear interval, show message
-      if (_countdownInterval) {
-        clearInterval(_countdownInterval);
-        _countdownInterval = null;
+  function tick() {
+    try {
+      var diff = examTs - Date.now();
+
+      if (diff <= 0) {
+        if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
+        var el = document.getElementById("countdownClock");
+        if (el) el.innerHTML =
+          '<div style="font-size:clamp(16px,3vw,30px);color:#ffb347;letter-spacing:2px;' +
+          'text-align:center;line-height:1.5;font-family:impact,sans-serif;">' +
+          'EXAM DAY HAS ARRIVED — GIVE EVERYTHING YOU HAVE</div>';
+        return;
       }
+
+      var totalSec = Math.floor(diff / 1000);
+      var d = Math.floor(totalSec / 86400);
+      var h = Math.floor((totalSec % 86400) / 3600);
+      var m = Math.floor((totalSec % 3600) / 60);
+      var s = totalSec % 60;
+
+      setText("cdDays",  pad(d, 3));
+      setText("cdHours", pad(h, 2));
+      setText("cdMins",  pad(m, 2));
+      setText("cdSecs",  pad(s, 2));
+
       var clock = document.getElementById("countdownClock");
       if (clock) {
-        clock.innerHTML =
-          '<div style="font-family:\'Bebas Neue\',impact,sans-serif;' +
-          'font-size:clamp(20px,4vw,36px);color:#ffb347;letter-spacing:3px;' +
-          'text-align:center;padding:10px 0;line-height:1.3;">' +
-          'EXAM DAY HAS ARRIVED<br>GIVE EVERYTHING YOU HAVE' +
-          '</div>';
+        clock.className = "countdown-clock" +
+          (d < 10 ? " urgent-critical" : d < 30 ? " urgent-high" : d < 60 ? " urgent-mid" : "");
       }
-      return;
+    } catch (err) {
+      console.warn("[Countdown] tick skipped:", err.message);
     }
-
-    var totalSec = Math.floor(diff / 1000);
-    var days     = Math.floor(totalSec / 86400);
-    var hours    = Math.floor((totalSec % 86400) / 3600);
-    var minutes  = Math.floor((totalSec % 3600) / 60);
-    var seconds  = totalSec % 60;
-
-    setText("cdDays",  String(days).padStart(3, "0"));
-    setText("cdHours", String(hours).padStart(2, "0"));
-    setText("cdMins",  String(minutes).padStart(2, "0"));
-    setText("cdSecs",  String(seconds).padStart(2, "0"));
-
-    // Urgency colour class (only on the wrapper, not on child elements)
-    var clock = document.getElementById("countdownClock");
-    if (clock) {
-      var cls = "countdown-clock";
-      if      (days < 10) cls += " urgent-critical";
-      else if (days < 30) cls += " urgent-high";
-      else if (days < 60) cls += " urgent-mid";
-      clock.className = cls;
-    }
-
-    // Prep progress % label
-    var prepStr   = (typeof CONFIG !== "undefined" && CONFIG.PREP_START)
-      ? CONFIG.PREP_START : examDateStr;
-    var pParts    = prepStr.split("-").map(Number);
-    var prepStart = new Date(pParts[0], pParts[1] - 1, pParts[2], 0, 0, 0, 0);
-    var totalSpan = examDate.getTime() - prepStart.getTime();
-    var usedSpan  = now.getTime()      - prepStart.getTime();
-    var pct       = totalSpan > 0
-      ? Math.max(0, Math.min(100, Math.round((usedSpan / totalSpan) * 100)))
-      : 0;
-    var pctEl = document.getElementById("prepPct");
-    if (pctEl) pctEl.textContent = pct + "% used";
   }
 
-  // Clear any existing interval first
-  if (_countdownInterval) clearInterval(_countdownInterval);
+  function init() {
+    tick();
+    timerHandle = setInterval(tick, 1000);
+  }
 
-  tick();                                          // fire immediately
-  _countdownInterval = setInterval(tick, 1000);   // then every second
-}
+  // DOM is guaranteed ready here because scripts load at bottom of <body>
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+
+}());
 
 // ── Prep timeline bar ─────────────────────────────────────
 function initPrepTimeline() {
