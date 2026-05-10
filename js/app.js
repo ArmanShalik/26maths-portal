@@ -75,50 +75,85 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ── Countdown ─────────────────────────────────────────────
+let _countdownInterval = null;
+
 function initCountdown() {
-  const examDate = new Date(CONFIG.EXAM_DATE + "T00:00:00");
+  // Resolve exam date — fall back to hardcoded date if config missing
+  const examDateStr = (typeof CONFIG !== "undefined" && CONFIG.EXAM_DATE)
+    ? CONFIG.EXAM_DATE
+    : "2026-08-10";
+
+  // Parse as local midnight to avoid timezone shifting the day
+  const parts    = examDateStr.split("-").map(Number);
+  const examDate = new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0);
+
+  function setText(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
 
   function tick() {
-    const now  = new Date();
-    const diff = examDate - now;
+    var now  = new Date();
+    var diff = examDate.getTime() - now.getTime();
 
     if (diff <= 0) {
-      document.getElementById("countdownClock").innerHTML =
-        `<div style="font-family:var(--bbn,sans-serif);font-size:clamp(24px,5vw,42px);color:var(--fire-amber);letter-spacing:3px;text-align:center;">
-          THE EXAM DAY HAS ARRIVED — GIVE EVERYTHING YOU HAVE
-        </div>`;
+      // Exam has arrived — clear interval, show message
+      if (_countdownInterval) {
+        clearInterval(_countdownInterval);
+        _countdownInterval = null;
+      }
+      var clock = document.getElementById("countdownClock");
+      if (clock) {
+        clock.innerHTML =
+          '<div style="font-family:\'Bebas Neue\',impact,sans-serif;' +
+          'font-size:clamp(20px,4vw,36px);color:#ffb347;letter-spacing:3px;' +
+          'text-align:center;padding:10px 0;line-height:1.3;">' +
+          'EXAM DAY HAS ARRIVED<br>GIVE EVERYTHING YOU HAVE' +
+          '</div>';
+      }
       return;
     }
 
-    const days    = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours   = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    var totalSec = Math.floor(diff / 1000);
+    var days     = Math.floor(totalSec / 86400);
+    var hours    = Math.floor((totalSec % 86400) / 3600);
+    var minutes  = Math.floor((totalSec % 3600) / 60);
+    var seconds  = totalSec % 60;
 
-    document.getElementById("cdDays").textContent  = String(days).padStart(3, "0");
-    document.getElementById("cdHours").textContent = String(hours).padStart(2, "0");
-    document.getElementById("cdMins").textContent  = String(minutes).padStart(2, "0");
-    document.getElementById("cdSecs").textContent  = String(seconds).padStart(2, "0");
+    setText("cdDays",  String(days).padStart(3, "0"));
+    setText("cdHours", String(hours).padStart(2, "0"));
+    setText("cdMins",  String(minutes).padStart(2, "0"));
+    setText("cdSecs",  String(seconds).padStart(2, "0"));
 
-    // Update urgency class
-    const clock = document.getElementById("countdownClock");
-    const base  = "countdown-clock";
-    if      (days < 10) clock.className = base + " urgent-critical";
-    else if (days < 30) clock.className = base + " urgent-high";
-    else if (days < 60) clock.className = base + " urgent-mid";
-    else                clock.className = base;
+    // Urgency colour class (only on the wrapper, not on child elements)
+    var clock = document.getElementById("countdownClock");
+    if (clock) {
+      var cls = "countdown-clock";
+      if      (days < 10) cls += " urgent-critical";
+      else if (days < 30) cls += " urgent-high";
+      else if (days < 60) cls += " urgent-mid";
+      clock.className = cls;
+    }
 
-    // Update prep pct label using days
-    const prepStart = new Date((CONFIG.PREP_START || CONFIG.EXAM_DATE) + "T00:00:00");
-    const total = (examDate - prepStart) / (1000 * 60 * 60 * 24);
-    const used  = (now - prepStart) / (1000 * 60 * 60 * 24);
-    const pct   = Math.max(0, Math.min(100, Math.round((used / total) * 100)));
-    const el    = document.getElementById("prepPct");
-    if (el) el.textContent = pct + "% used";
+    // Prep progress % label
+    var prepStr   = (typeof CONFIG !== "undefined" && CONFIG.PREP_START)
+      ? CONFIG.PREP_START : examDateStr;
+    var pParts    = prepStr.split("-").map(Number);
+    var prepStart = new Date(pParts[0], pParts[1] - 1, pParts[2], 0, 0, 0, 0);
+    var totalSpan = examDate.getTime() - prepStart.getTime();
+    var usedSpan  = now.getTime()      - prepStart.getTime();
+    var pct       = totalSpan > 0
+      ? Math.max(0, Math.min(100, Math.round((usedSpan / totalSpan) * 100)))
+      : 0;
+    var pctEl = document.getElementById("prepPct");
+    if (pctEl) pctEl.textContent = pct + "% used";
   }
 
-  tick();
-  setInterval(tick, 1000);
+  // Clear any existing interval first
+  if (_countdownInterval) clearInterval(_countdownInterval);
+
+  tick();                                          // fire immediately
+  _countdownInterval = setInterval(tick, 1000);   // then every second
 }
 
 // ── Prep timeline bar ─────────────────────────────────────
