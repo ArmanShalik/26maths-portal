@@ -10,7 +10,7 @@ const CONFIG = {
   // ── Tutor / institute identity ─────────────────────────────
   TUTOR_WHATSAPP : "94779740171",
   TUTOR_NAME     : "Arman Shalik BSc. — Combined Maths",
-  PORTAL_URL     : "https://armanshalik.github.io/maths-portal/",
+  PORTAL_URL     : "https://armanshalik.github.io/26maths-portal/",
 
   // ── Year & exam labels ─────────────────────────────────────
   YEAR_LABEL : "A/L · 2026",
