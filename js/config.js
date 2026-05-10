@@ -6,7 +6,7 @@
 const CONFIG = {
 
   // ── Your Apps Script Web App URL ──────────────────────────
-  API_URL: "https://script.google.com/macros/s/AKfycbzXi2vkeKUjFj3UMXP_vetPZW3GPPtlshfXe8I88ILwcDdF2z2PafrdxjGCJcj4-BecEw/exec"
+  API_URL: "https://script.google.com/macros/s/AKfycbzXi2vkeKUjFj3UMXP_vetPZW3GPPtlshfXe8I88ILwcDdF2z2PafrdxjGCJcj4-BecEw/exec",
   // ── Tutor / institute identity ─────────────────────────────
   TUTOR_WHATSAPP : "94779740171",
   TUTOR_NAME     : "Arman Shalik BSc. — Combined Maths",
