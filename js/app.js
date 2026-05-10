@@ -204,59 +204,37 @@ function rotateCry() {
   }, 300);
 }
 
-// ── Network: JSONP call to Apps Script ───────────────────
-// Apps Script web apps do not return CORS headers, so plain
-// fetch() always fails cross-origin. JSONP (script tag injection)
-// is the correct and only reliable method.
-function gsCall(url, timeoutMs) {
-  timeoutMs = timeoutMs || 8000;
-  return new Promise(function(resolve, reject) {
-    var id     = "__gs_" + Date.now() + "_" + Math.floor(Math.random() * 1e9);
-    var script = document.createElement("script");
-    var done   = false;
+// ── Network call to Apps Script ──────────────────────────
+// Uses plain fetch — Apps Script returns CORS headers on GET
+// requests so this works from GitHub Pages and any HTTPS host.
+// AbortController gives us a hard timeout.
+// The response may be JSON or JSONP-wrapped — we handle both.
+function gsCall(url, ms) {
+  var controller = new AbortController();
+  var timer = setTimeout(function() { controller.abort(); }, ms || 10000);
 
-    var timer = setTimeout(function() {
-      if (done) return;
-      done = true;
-      cleanup();
-      reject(new Error(
-        "Timed out after " + (timeoutMs/1000) + "s.\n\n" +
-        "Check the following:\n" +
-        "1. API_URL in config.js matches your deployed Web App URL exactly.\n" +
-        "2. Code.gs is deployed as a Web App (Deploy → Manage Deployments).\n" +
-        "3. 'Who has access' is set to Anyone (not 'Anyone with Google Account').\n" +
-        "4. After editing Code.gs you created a NEW version when redeploying."
-      ));
-    }, timeoutMs);
-
-    function cleanup() {
+  return fetch(url, { signal: controller.signal })
+    .then(function(res) {
       clearTimeout(timer);
-      delete window[id];
-      if (script.parentNode) script.parentNode.removeChild(script);
-    }
-
-    window[id] = function(data) {
-      if (done) return;
-      done = true;
-      cleanup();
-      resolve(data);
-    };
-
-    script.onerror = function() {
-      if (done) return;
-      done = true;
-      cleanup();
-      reject(new Error(
-        "Could not reach the Apps Script URL.\n\n" +
-        "1. Check that API_URL in config.js is correct.\n" +
-        "2. Open the API_URL directly in your browser — it should show JSON.\n" +
-        "3. Make sure 'Who has access' is set to Anyone."
-      ));
-    };
-
-    script.src = url + (url.indexOf("?") === -1 ? "?" : "&") + "callback=" + id;
-    document.head.appendChild(script);
-  });
+      return res.text();
+    })
+    .then(function(text) {
+      // Strip JSONP wrapper if present: callbackName({...}) → {...}
+      var clean = text.trim();
+      if (clean.charAt(0) !== "{" && clean.charAt(0) !== "[") {
+        var start = clean.indexOf("(");
+        var end   = clean.lastIndexOf(")");
+        if (start !== -1 && end !== -1) clean = clean.slice(start + 1, end);
+      }
+      return JSON.parse(clean);
+    })
+    .catch(function(err) {
+      clearTimeout(timer);
+      if (err.name === "AbortError") {
+        throw new Error("Request timed out. Check your API_URL in config.js and make sure Code.gs is deployed.");
+      }
+      throw err;
+    });
 }
 
 // ── Lookup ────────────────────────────────────────────────
@@ -271,34 +249,29 @@ async function lookup() {
   setSearchBtn(true);
   Charts.destroyAll();
 
-  // Quick config check before even making a request
-  if (!CONFIG.API_URL ||
-      CONFIG.API_URL.trim() === "" ||
-      CONFIG.API_URL === "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec" ||
-      CONFIG.API_URL.indexOf("script.google.com") === -1) {
+  if (!CONFIG.API_URL || CONFIG.API_URL.indexOf("script.google.com") === -1) {
     showSpinner(false);
     setSearchBtn(false);
-    setError("⚠ API_URL in config.js is not set. Open js/config.js and paste your Apps Script Web App URL.");
+    setError("⚠ API_URL in config.js is not set correctly.");
     return;
   }
 
   const url = CONFIG.API_URL + "?action=getFullData&query=" + encodeURIComponent(q);
 
   try {
-    const data = await gsCall(url, 8000);
+    const data = await gsCall(url, 10000);
     onData(data);
   } catch (err) {
+    setError("❌ " + err.message);
+    console.error("[Portal] Error:", err);
+  } finally {
+    // Always stop the spinner — even if onData throws
     showSpinner(false);
     setSearchBtn(false);
-    setError("❌ " + err.message);
-    console.error("[Portal] Fetch error:", err);
   }
 }
 
 function onData(data) {
-  showSpinner(false);
-  setSearchBtn(false);
-
   if (data.error) { setError(data.error); return; }
 
   allData    = data;
